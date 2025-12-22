@@ -1,0 +1,159 @@
+# 🚀 MARTINE IA - Guide d'Installation Rapide
+
+## 📁 Étape 1 : Créer la structure de dossiers
+
+Dans ton OneDrive, crée cette arborescence :
+
+```
+OneDrive/
+└── Outil-Martine/
+    ├── .env
+    ├── requirements.txt
+    ├── src/
+    │   ├── notion_client.py
+    │   ├── gemini_estimator.py
+    │   └── main.py
+    └── logs/
+```
+
+## 📝 Étape 2 : Copier les fichiers
+
+Je t'ai créé 5 artifacts. Copie-colle le contenu de chacun :
+
+1. **`.env`** → fichier `.env` (à la racine)
+2. **`requirements.txt`** → fichier `requirements.txt`
+3. **`notion_client.py`** → dans le dossier `src/`
+4. **`gemini_estimator.py`** → dans le dossier `src/`
+5. **`main.py`** → dans le dossier `src/`
+
+## 🔧 Étape 3 : Installer Python et les dépendances
+
+### 3.1 Vérifier Python
+Ouvre PowerShell et tape :
+```bash
+python --version
+```
+Si tu n'as pas Python 3.8+, télécharge-le sur [python.org](https://www.python.org/downloads/)
+
+### 3.2 Installer les librairies
+Dans PowerShell, va dans ton dossier :
+```bash
+cd "C:\Users\[TON_NOM]\OneDrive\Outil-Martine"
+pip install -r requirements.txt
+```
+
+## ▶️ Étape 4 : Utilisation Quotidienne
+
+### Option A : Lancement Manuel (Recommandé au début)
+J'ai créé un fichier **`run_martine.bat`** dans le dossier.
+1. Double-clique simplement sur `run_martine.bat`.
+2. Une fenêtre noire va s'ouvrir, afficher la progression, et attendre que tu appuies sur une touche à la fin.
+3. C'est tout ! Tes tâches Notion sont à jour.
+
+### Option B : Automatisation (Pour ne plus y penser)
+Si tu veux que ça tourne tout seul (ex: tous les matins à 9h) sans que tu touches à rien :
+**Condition :** Ton ordinateur doit être allumé à cette heure-là.
+
+1. Cherche **"Planificateur de tâches"** dans le menu Démarrer de Windows.
+2. À droite, clique sur **"Créer une tâche de base..."**.
+3. **Nom** : "Martine IA Auto".
+4. **Déclencheur** : "Tous les jours" > Choisis l'heure (ex: 09:00:00).
+5. **Action** : "Démarrer un programme".
+6. **Programme/script** : Parcourir > Sélectionne le fichier `run_martine.bat`.
+   *Astuce : Si une fenêtre s'ouvre, c'est bon.*
+
+---
+
+## 🆘 En cas de problème
+
+### Erreur Notion 401
+Vérifie que ton `NOTION_TOKEN` dans le fichier `.env` commence bien par `secret_` (et non `ntn_`) et que l'intégration est invitée sur la base de données.
+
+### Erreur GPT
+Vérifie que ta `GPT_API_KEY` est valide.
+
+---
+
+## 🎯 Ce que fait le script
+1. Il lit tes tâches Notion.
+2. Il calcule le temps réel des tâches terminées.
+3. Il envoie les nouvelles tâches à GPT-4o pour estimation.
+4. Il met à jour Notion avec les heures estimées.
+
+---
+
+## 📊 Prochaines étapes (optionnelles)
+
+Une fois que ça tourne, on peut ajouter :
+
+### A) Créer la base Phases
+```python
+# Je te ferai un script setup_phases.py pour créer automatiquement :
+# - Base Phases avec colonnes (Nom, Projet, Statut, Budget temps)
+# - Relations Projet → Phase → Tâche
+```
+
+### B) Vues Notion optimisées
+Je te créerai des templates JSON à importer dans Notion pour :
+- Vue "Aujourd'hui" (filtre : Date = today)
+- Vue "Saisie rapide" (formulaire minimaliste)
+- Vue "Arbre projet" (grouped by Phase)
+
+### C) Dashboard de pilotage
+Un fichier `dashboard.py` qui génère un rapport Excel/PDF avec :
+- Temps estimé vs réel par projet
+- Alertes dérive >20%
+- Prédictions burn-down
+
+---
+
+## 🎯 Test immédiat
+
+Lance le script une première fois :
+```bash
+cd src
+python main.py
+```
+
+Tu devrais voir :
+```
+============================================================
+🧠 MARTINE IA - Estimation automatique des temps
+============================================================
+
+🔧 Vérification des colonnes...
+✅ Colonnes prêtes
+
+📊 Agrégation des temps réels...
+✅ X tâches mises à jour avec temps réels
+
+🔍 Recherche des tâches à estimer...
+📝 X tâches à estimer
+
+🤖 Lancement des estimations Gemini...
+🤖 Estimation 1/X: [Nom tâche]
+  ✅ 120 min estimées
+...
+
+💾 Mise à jour Notion...
+✅ X/X estimations enregistrées
+📝 Log sauvegardé: logs/estimations_20251222_HHMMSS.json
+
+📊 Calcul des écarts...
+✅ X écarts calculés
+
+============================================================
+✅ TRAITEMENT TERMINÉ
+============================================================
+```
+
+---
+
+## 📞 Besoin d'aide ?
+
+Si tu as une erreur, envoie-moi :
+1. Le message d'erreur complet
+2. Le contenu du fichier `.env` (masque les tokens !)
+3. La version de Python (`python --version`)
+
+Je débuggerai en 2 min 🔥
