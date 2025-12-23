@@ -74,34 +74,8 @@ def setup_columns():
 
 def aggregate_real_times():
     """Agrège les temps réels depuis les saisies temps"""
-    print("\n📊 Agrégation des temps réels...")
-    
-    # Lire toutes les saisies temps
-    saisies = notion.query_database(DB_SAISIES)
-    
-    # Grouper par tâche (via relation "Action")
-    temps_par_tache = {}
-    for saisie in saisies:
-        actions = notion.get_property_value(saisie, "Action")
-        duree = notion.get_property_value(saisie, "Durée (min)")
-        
-        if actions and duree:
-            for action_id in actions:
-                if action_id not in temps_par_tache:
-                    temps_par_tache[action_id] = 0
-                temps_par_tache[action_id] += duree
-    
-    # Mettre à jour les tâches
-    updated = 0
-    for tache_id, total_minutes in temps_par_tache.items():
-        success = notion.update_page(tache_id, {
-            "⏱️ Temps réel agrégé (min)": {"number": total_minutes}
-        })
-        if success:
-            updated += 1
-    
-    print(f"✅ {updated} tâches mises à jour avec temps réels")
-    return temps_par_tache
+    print("\nℹ️ Agrégation des temps réels DÉSACTIVÉE (car bases différentes)")
+    return {}
 
 def get_tasks_to_estimate():
     """Récupère les tâches sans estimation IA"""
@@ -115,9 +89,9 @@ def get_tasks_to_estimate():
         temps_estime = notion.get_property_value(tache, "⏱️ Temps estimé IA (min)")
         
         # Filtres utilisateur :
-        # - Exclure : "Infos", "Backlog"
+        # - Exclure : "Infos", "Backlog", "Plateforme"
         # - Inclure : "Terminé", "Abandonné", "Archives" (et les autres comme "À faire", "En cours")
-        excluded_status = ["Infos", "Backlog"]
+        excluded_status = ["Infos", "Backlog", "Plateforme"]
         
         if statut not in excluded_status and (temps_estime is None or temps_estime == 0):
             to_estimate.append({
