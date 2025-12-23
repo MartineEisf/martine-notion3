@@ -178,3 +178,55 @@ class NotionClient:
         
         print(f"✅ Colonne '{prop_name}' ajoutée")
         return True
+
+    def get_page_blocks(self, page_id: str) -> List[Dict]:
+        """Récupère les blocs (contenu) d'une page"""
+        url = f"{self.base_url}/blocks/{page_id}/children"
+        all_blocks = []
+        has_more = True
+        start_cursor = None
+        
+        while has_more:
+            params = {"page_size": 100}
+            if start_cursor:
+                params["start_cursor"] = start_cursor
+            
+            response = requests.get(url, headers=self.headers, params=params)
+            
+            if response.status_code != 200:
+                print(f"❌ Erreur get blocks {page_id}: {response.text}")
+                break
+            
+            data = response.json()
+            all_blocks.extend(data.get("results", []))
+            has_more = data.get("has_more", False)
+            start_cursor = data.get("next_cursor")
+        
+        return all_blocks
+
+    def get_page_content(self, page_id: str) -> str:
+        """Récupère tout le texte lisible d'une page"""
+        blocks = self.get_page_blocks(page_id)
+        content_lines = []
+        
+        for block in blocks:
+            btype = block.get("type")
+            text_content = ""
+            
+            # Gérer les types de blocs courants avec texte
+            if btype in ["paragraph", "heading_1", "heading_2", "heading_3", "bulleted_list_item", "numbered_list_item", "to_do", "callout", "quote"]:
+                rich_text = block.get(btype, {}).get("rich_text", [])
+                text_content = "".join([t.get("plain_text", "") for t in rich_text])
+            
+            if text_content:
+                # Ajouter un préfixe selon le type pour la structure
+                prefix = ""
+                if btype == "heading_1": prefix = "# "
+                elif btype == "heading_2": prefix = "## "
+                elif btype == "heading_3": prefix = "### "
+                elif btype in ["bulleted_list_item", "numbered_list_item"]: prefix = "- "
+                elif btype == "to_do": prefix = "[ ] "
+                
+                content_lines.append(f"{prefix}{text_content}")
+        
+        return "\n".join(content_lines)

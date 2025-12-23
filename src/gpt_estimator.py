@@ -18,7 +18,8 @@ class GPTEstimator:
         task_name: str,
         task_description: str,
         project_context: str,
-        historical_tasks: List[Dict]
+        historical_tasks: List[Dict],
+        task_content: str = ""
     ) -> Optional[float]:
         """
         Estime le temps nécessaire pour une tâche
@@ -40,9 +41,12 @@ TÂCHE À ESTIMER:
 Nom: {task_name}
 Description: {task_description}
 
+CONTENU DÉTAILLÉ DE LA TÂCHE (Page Notion):
+{task_content if task_content else "Aucun contenu détaillé disponible."}
+
 INSTRUCTIONS:
 1. Analyse l'historique des tâches similaires
-2. Prends en compte la complexité décrite
+2. Prends en compte la complexité décrite dans la description ET le contenu détaillé
 3. Estime le temps nécessaire de manière RÉALISTE (les humains sous-estiment souvent)
 4. Réponds UNIQUEMENT avec un nombre entier de minutes (ex: 120 pour 2h)
 5. Ne réponds QUE le nombre, rien d'autre. Pas de texte avant ni après.
@@ -118,6 +122,7 @@ ESTIMATION EN MINUTES:"""
             task_id = task.get("id")
             task_name = task.get("nom", "Tâche sans nom")
             task_desc = task.get("description", "")
+            task_content = task.get("content", "")
             
             print(f"🤖 Estimation {i}/{len(tasks_to_estimate)}: {task_name}")
             
@@ -131,7 +136,8 @@ ESTIMATION EN MINUTES:"""
                 task_name=task_name,
                 task_description=task_desc,
                 project_context=f"Projet: {project_name}",
-                historical_tasks=similar_tasks
+                historical_tasks=similar_tasks,
+                task_content=task_content
             )
             
             if estimated_time:

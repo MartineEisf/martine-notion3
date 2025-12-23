@@ -94,11 +94,16 @@ def get_tasks_to_estimate():
         excluded_status = ["Infos", "Backlog", "Plateforme"]
         
         if statut not in excluded_status and (temps_estime is None or temps_estime == 0):
+            # Récupérer le contenu détaillé de la page
+            print(f"   📄 Lecture du contenu pour : {notion.get_property_value(tache, 'Nom')}")
+            content = notion.get_page_content(tache["id"])
+            
             to_estimate.append({
                 "id": tache["id"],
                 "nom": notion.get_property_value(tache, "Nom"),
                 "description": notion.get_property_value(tache, "Description") or "",
-                "projet": notion.get_property_value(tache, "Projet/Tlt") or []
+                "projet": notion.get_property_value(tache, "Projet/Tlt") or [],
+                "content": content
             })
     
     print(f"📝 {len(to_estimate)} tâches à estimer")
