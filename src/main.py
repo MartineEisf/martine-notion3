@@ -5,6 +5,7 @@ Lit Notion, estime via Gemini, met à jour les temps
 import os
 import sys
 import json
+import hashlib
 from datetime import datetime
 
 # Forcer l'encodage UTF-8 pour Windows (pour les émojis)
@@ -70,6 +71,13 @@ def setup_columns():
             {"number": {"format": "percent"}}
         )
     
+    if "🔄 Hash contenu" not in taches_schema:
+        notion.add_property_to_database(
+            DB_TACHES,
+            "🔄 Hash contenu",
+            {"rich_text": {}}
+        )
+    
     print("✅ Colonnes prêtes")
 
 def aggregate_real_times():
@@ -78,36 +86,61 @@ def aggregate_real_times():
     return {}
 
 def get_tasks_to_estimate():
-    """Récupère les tâches sans estimation IA"""
+    """Récupère les tâches sans estimation IA ou dont le contenu a changé"""
     print("\n🔍 Recherche des tâches à estimer...")
     
-    # Filtrer : pas encore d'estimation IA ET statut != "Terminé"
     taches = notion.query_database(DB_TACHES)
     to_estimate = []
+    re_estimate_count = 0
+    
     for tache in taches:
         statut = notion.get_property_value(tache, "Statut")
         temps_estime = notion.get_property_value(tache, "⏱️ Temps estimé IA (min)")
-        
+        hash_stocke = notion.get_property_value(tache, "🔄 Hash contenu") or ""
         
         # Filtres utilisateur :
         # - Exclure : "Infos", "Backlog", "Plateforme"
-        # - Inclure : "Terminé", "Abandonné", "Archives" (et les autres comme "À faire", "En cours")
         excluded_status = ["Infos", "Backlog", "Plateforme"]
         
-        if statut not in excluded_status and (temps_estime is None or temps_estime == 0):
-            # Récupérer le contenu détaillé de la page
-            print(f"   📄 Lecture du contenu pour : {notion.get_property_value(tache, 'Nom')}")
-            content = notion.get_page_content(tache["id"])
-            
+        if statut in excluded_status:
+            continue
+        
+        # Récupérer le contenu pour calculer le hash
+        nom = notion.get_property_value(tache, 'Nom')
+        description = notion.get_property_value(tache, "Description") or ""
+        content = notion.get_page_content(tache["id"])
+        
+        # Calculer le hash du contenu actuel
+        content_to_hash = f"{nom}|{description}|{content}"
+        hash_actuel = hashlib.md5(content_to_hash.encode('utf-8')).hexdigest()
+        
+        # Déterminer si on doit estimer
+        should_estimate = False
+        reason = ""
+        
+        if temps_estime is None or temps_estime == 0:
+            should_estimate = True
+            reason = "nouvelle"
+        elif hash_actuel != hash_stocke:
+            should_estimate = True
+            reason = "contenu modifié"
+            re_estimate_count += 1
+        
+        if should_estimate:
+            print(f"   📄 {nom[:50]} ({reason})")
             to_estimate.append({
                 "id": tache["id"],
-                "nom": notion.get_property_value(tache, "Nom"),
-                "description": notion.get_property_value(tache, "Description") or "",
+                "nom": nom,
+                "description": description,
                 "projet": notion.get_property_value(tache, "Projet/Tlt") or [],
-                "content": content
+                "content": content,
+                "hash": hash_actuel
             })
     
-    print(f"📝 {len(to_estimate)} tâches à estimer")
+    if re_estimate_count > 0:
+        print(f"📝 {len(to_estimate)} tâches à estimer ({re_estimate_count} ré-estimations)")
+    else:
+        print(f"📝 {len(to_estimate)} tâches à estimer")
     return to_estimate
 
 def get_historical_tasks():
@@ -152,13 +185,26 @@ def run_estimations():
         project_name="EISF Alternance"
     )
     
-    # Mettre à jour Notion
+    # Mettre à jour Notion avec estimations ET hash
     print("\n💾 Mise à jour Notion...")
     updated = 0
+    
+    # Créer un mapping task_id -> hash
+    task_hashes = {task["id"]: task["hash"] for task in tasks_to_estimate}
+    
     for task_id, estimated_minutes in estimates.items():
-        success = notion.update_page(task_id, {
+        # Préparer les propriétés à mettre à jour
+        properties = {
             "⏱️ Temps estimé IA (min)": {"number": estimated_minutes}
-        })
+        }
+        
+        # Ajouter le hash si disponible
+        if task_id in task_hashes:
+            properties["🔄 Hash contenu"] = {
+                "rich_text": [{"text": {"content": task_hashes[task_id]}}]
+            }
+        
+        success = notion.update_page(task_id, properties)
         if success:
             updated += 1
     
@@ -201,7 +247,7 @@ def main():
     
     try:
         # 1. Setup colonnes
-        # setup_columns() # Desactivé temporairement
+        setup_columns() 
         
         # 2. Agréger temps réels
         # aggregate_real_times() # Desactivé car bases différentes
