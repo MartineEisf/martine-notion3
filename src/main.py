@@ -109,14 +109,17 @@ def get_tasks_to_estimate():
     
     # Filtrer : pas encore d'estimation IA ET statut != "Terminé"
     taches = notion.query_database(DB_TACHES)
-    
     to_estimate = []
     for tache in taches:
         statut = notion.get_property_value(tache, "Statut")
         temps_estime = notion.get_property_value(tache, "⏱️ Temps estimé IA (min)")
         
-        # Exclure les tâches terminées ou déjà estimées
-        if statut != "Terminé" and (temps_estime is None or temps_estime == 0):
+        # Filtres utilisateur :
+        # - Exclure : "Infos", "Backlog"
+        # - Inclure : "Terminé", "Abandonné", "Archives" (et les autres comme "À faire", "En cours")
+        excluded_status = ["Infos", "Backlog"]
+        
+        if statut not in excluded_status and (temps_estime is None or temps_estime == 0):
             to_estimate.append({
                 "id": tache["id"],
                 "nom": notion.get_property_value(tache, "Nom"),
@@ -218,16 +221,16 @@ def main():
     
     try:
         # 1. Setup colonnes
-        setup_columns()
+        # setup_columns() # Desactivé temporairement
         
         # 2. Agréger temps réels
-        aggregate_real_times()
+        # aggregate_real_times() # Desactivé car bases différentes
         
         # 3. Estimer via IA
         run_estimations()
         
         # 4. Calculer écarts
-        calculate_deviations()
+        # calculate_deviations() # Desactivé
         
         print("\n" + "=" * 60)
         print("✅ TRAITEMENT TERMINÉ")

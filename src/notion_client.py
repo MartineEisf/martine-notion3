@@ -131,6 +131,25 @@ class NotionClient:
         
         return response.json().get("id")
     
+    
+    def create_database(self, parent_page_id: str, title: str, properties: Dict) -> Optional[str]:
+        """Crée une nouvelle database"""
+        url = f"{self.base_url}/databases"
+        payload = {
+            "parent": {"type": "page_id", "page_id": parent_page_id},
+            "title": [{"type": "text", "text": {"content": title}}],
+            "properties": properties
+        }
+        
+        response = requests.post(url, headers=self.headers, json=payload)
+        
+        if response.status_code != 200:
+            print(f"❌ Erreur create DB: {response.text}")
+            return None
+        
+        print(f"✅ Database '{title}' créée !")
+        return response.json().get("id")
+
     def get_database_schema(self, database_id: str) -> Dict:
         """Récupère le schéma d'une database (colonnes existantes)"""
         url = f"{self.base_url}/databases/{database_id}"
