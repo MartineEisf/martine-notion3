@@ -88,6 +88,7 @@ def get_tasks_to_estimate():
         statut = notion.get_property_value(tache, "Statut")
         temps_estime = notion.get_property_value(tache, "⏱️ Temps estimé IA (min)")
         
+        
         # Filtres utilisateur :
         # - Exclure : "Infos", "Backlog", "Plateforme"
         # - Inclure : "Terminé", "Abandonné", "Archives" (et les autres comme "À faire", "En cours")
